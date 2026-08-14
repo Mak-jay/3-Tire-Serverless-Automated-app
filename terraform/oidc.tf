@@ -1,12 +1,11 @@
 data "aws_caller_identity" "current" {}
 
-# ---------------------------------------------------------------------------
 # Fetch GitHub's current TLS certificate chain and use the ROOT CA entry
 # (last in the chain) for the thumbprint. The root barely ever rotates,
 # unlike the leaf cert, so this stays valid far longer if hand-copied
 # thumbprints go stale. AWS requires the field to be present but no longer
 # strictly validates it against GitHub's actual chain.
-# ---------------------------------------------------------------------------
+
 data "tls_certificate" "github" {
   url = "https://token.actions.githubusercontent.com/.well-known/openid-configuration"
 }
