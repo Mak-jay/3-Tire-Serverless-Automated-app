@@ -1,8 +1,16 @@
 data "aws_caller_identity" "current" {}
 
-# GitHub's OIDC provider. AWS validates the token against GitHub's TLS chain;
-# the thumbprint below is GitHub's current intermediate CA root thumbprint,
-# required by the API but no longer actually used for verification.
+# ---------------------------------------------------------------------------
+# Fetch GitHub's current TLS certificate chain and use the ROOT CA entry
+# (last in the chain) for the thumbprint. The root barely ever rotates,
+# unlike the leaf cert, so this stays valid far longer if hand-copied
+# thumbprints go stale. AWS requires the field to be present but no longer
+# strictly validates it against GitHub's actual chain.
+# ---------------------------------------------------------------------------
+data "tls_certificate" "github" {
+  url = "https://token.actions.githubusercontent.com/.well-known/openid-configuration"
+}
+
 resource "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 
@@ -11,14 +19,16 @@ resource "aws_iam_openid_connect_provider" "github" {
   ]
 
   thumbprint_list = [
-    "6938fd4d98bab03faadb97b34396831e3780aea",
+    data.tls_certificate.github.certificates[length(data.tls_certificate.github.certificates) - 1].sha1_fingerprint,
   ]
 
   tags = var.tags
 }
 
+# ---------------------------------------------------------------------------
 # Trust policy: only workflows running from the specified repo + branches
 # (and optionally pull_request events) may assume this role.
+# ---------------------------------------------------------------------------
 locals {
   branch_subs = [
     for b in var.allowed_branches : "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/${b}"
@@ -60,6 +70,9 @@ resource "aws_iam_role" "deployer" {
   max_session_duration = var.max_session_duration
   tags                 = var.tags
 }
+
+# ---------------------------------------------------------------------------
 # NOTE: no permissions policy is attached here on purpose. Attach a scoped
 # policy (or AdministratorAccess temporarily, for bootstrap only) once the
-# pipeline's actual needs are known 
+# pipeline's actual needs are known — that's a later phase.
+# ---------------------------------------------------------------------------
