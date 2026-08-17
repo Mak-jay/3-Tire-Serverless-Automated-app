@@ -9,8 +9,18 @@ variable "github_org" {
   type        = string
 }
 
+variable "github_owner_id" {
+  description = "Immutable numeric ID of the GitHub org/user (repository_owner_id claim). Required because this repo uses GitHub's immutable OIDC subject claim format (opted in after Apr 2026, or created after July 15 2026)."
+  type        = string
+}
+
 variable "github_repo" {
   description = "GitHub repository name (without org prefix)"
+  type        = string
+}
+
+variable "github_repo_id" {
+  description = "Immutable numeric ID of the GitHub repository (repository_id claim). Required for the same reason as github_owner_id."
   type        = string
 }
 
@@ -38,6 +48,12 @@ variable "max_session_duration" {
   default     = 3600
 }
 
+variable "app_name" {
+  description = "Short prefix used to scope all resource ARNs this pipeline can touch (buckets, tables, functions, roles). Keep it unique to this app."
+  type        = string
+  default     = "3tier"
+}
+
 variable "tags" {
   description = "Tags applied to created resources"
   type        = map(string)
@@ -46,3 +62,4 @@ variable "tags" {
     Purpose   = "github-oidc-bootstrap"
   }
 }
+

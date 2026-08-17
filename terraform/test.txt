@@ -1,0 +1,2 @@
+terraform_lock_table = "3tier-terraform-locks"
+terraform_state_bucket = "3tier-terraform-state-915370161738"

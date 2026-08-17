@@ -29,11 +29,13 @@ resource "aws_iam_openid_connect_provider" "github" {
 # (and optionally pull_request events) may assume this role.
 # ---------------------------------------------------------------------------
 locals {
+  repo_prefix = "repo:${var.github_org}@${var.github_owner_id}/${var.github_repo}@${var.github_repo_id}"
+
   branch_subs = [
-    for b in var.allowed_branches : "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/${b}"
+    for b in var.allowed_branches : "${local.repo_prefix}:ref:refs/heads/${b}"
   ]
   pr_subs = var.allow_pull_requests ? [
-    "repo:${var.github_org}/${var.github_repo}:pull_request"
+    "${local.repo_prefix}:pull_request"
   ] : []
   allowed_subs = concat(local.branch_subs, local.pr_subs)
 }
