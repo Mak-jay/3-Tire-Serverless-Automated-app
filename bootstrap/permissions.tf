@@ -1,11 +1,3 @@
-# ---------------------------------------------------------------------------
-# Deploy permissions for the github-actions-deployer role, scoped to
-# resources prefixed with var.app_name ("3tier-*" by default) wherever the
-# service supports resource-level ARN scoping. A few services (API Gateway
-# REST APIs, and IAM's list/read actions) don't support fine-grained
-# resource ARNs for the actions Terraform needs, so those are broader by
-# necessity -- noted inline below.
-# ---------------------------------------------------------------------------
 
 data "aws_iam_policy_document" "deployer_permissions" {
 
@@ -46,6 +38,7 @@ data "aws_iam_policy_document" "deployer_permissions" {
       "s3:GetBucketWebsite", "s3:PutBucketWebsite", "s3:DeleteBucketWebsite",
       "s3:GetBucketCORS", "s3:PutBucketCORS",
       "s3:GetBucketTagging", "s3:PutBucketTagging",
+      "s3:GetBucketAcl", # AWS provider reads this during refresh even without an aws_s3_bucket_acl resource
     ]
     resources = [
       "arn:aws:s3:::${var.app_name}-*",
@@ -80,6 +73,7 @@ data "aws_iam_policy_document" "deployer_permissions" {
       "lambda:DeleteAlias", "lambda:GetAlias", "lambda:AddPermission",
       "lambda:RemovePermission", "lambda:GetPolicy", "lambda:TagResource",
       "lambda:UntagResource", "lambda:ListTags",
+      "lambda:GetFunctionCodeSigningConfig", # AWS provider reads this during refresh even without a code signing config set
     ]
     resources = [
       "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:${var.app_name}-*",
